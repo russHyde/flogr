@@ -62,6 +62,7 @@
 #' @importFrom   methods       setGeneric
 #' @importFrom   methods       setMethod
 #' @importFrom   methods       setReplaceMethod
+#' @importFrom   lintr         expect_lint_free
 NULL
 
 ###############################################################################
