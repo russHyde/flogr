@@ -2,7 +2,7 @@
 
 export(LoggingTuple)
 export(flog)
-export(flog.filter_df)
+export(flog_filter_df)
 export(get_dataset)
 export(get_logdata)
 export(nrow_logger)
