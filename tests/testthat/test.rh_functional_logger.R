@@ -2,7 +2,7 @@
 # 2017-06-01
 # - unit tests for LoggingTuple class methods 'get_dataset' and 'get_logdata'
 # - unit tests for instantiation of the LoggingTuple class were added
-# - unit tests for flog.filter_df added
+# - unit tests for flog_filter_df added
 #
 # 2017-02-27
 # - testthat unit tests for the logging-step and logging-workflow classes
@@ -10,7 +10,7 @@
 ###############################################################################
 
 context("Unit tests for function_logger.R: classes LoggingStep/LoggingTuple and
-functions flog/flog.filter_df")
+functions flog/flog_filter_df")
 
 ###############################################################################
 # Helpers
@@ -30,15 +30,15 @@ DF <- function(
 
 test_that("Instantiation of LoggingTuple class", {
   expect_true(
-    is(LoggingTuple(dataset = NA, log.data = list()), "LoggingTuple"),
+    is(LoggingTuple(dataset = NA, logdata = list()), "LoggingTuple"),
     info = "A new LoggingTuple is of the correct class"
     )
   expect_true(
-    isS4(LoggingTuple(dataset = NA, log.data = list())),
+    isS4(LoggingTuple(dataset = NA, logdata = list())),
     info = "A new LoggingTuple is an S4 object"
     )
   expect_error(
-    object = LoggingTuple(log.data = list(1, 2, 3)),
+    object = LoggingTuple(logdata = list(1, 2, 3)),
     info   = "'dataset' must be defined at creation of a LoggingTuple"
     )
   expect_true(
@@ -46,8 +46,8 @@ test_that("Instantiation of LoggingTuple class", {
     info = "A newly made LoggingTuple should have a 'dataset' slot"
     )
   expect_true(
-    "log.data" %in% slotNames(LoggingTuple(dataset = NA)),
-    info = "A newly made LoggingTuple should have a 'log.data' slot"
+    "logdata" %in% slotNames(LoggingTuple(dataset = NA)),
+    info = "A newly made LoggingTuple should have a 'logdata' slot"
     )
   expect_equal(
     object   = LoggingTuple(dataset = 12345)@dataset,
@@ -55,22 +55,22 @@ test_that("Instantiation of LoggingTuple class", {
     info     = "dataset should match the input"
     )
   expect_equal(
-    object   = LoggingTuple(dataset = 12345)@log.data,
+    object   = LoggingTuple(dataset = 12345)@logdata,
     expected = list(),
-    info     = "default log.data should be an empty list()"
+    info     = "default logdata should be an empty list()"
     )
   expect_equal(
     object   = LoggingTuple(dataset = 12345,
-                            log.data = list("some.log")
-                            )@log.data,
+                            logdata = list("some.log")
+                            )@logdata,
     expected = list("some.log"),
-    info     = "if passed in, log.data should match the input"
+    info     = "if passed in, logdata should match the input"
     )
   expect_error(
     object   = LoggingTuple(dataset = 12345,
-                            log.data = "NOT A LIST"
+                            logdata = "NOT A LIST"
                             ),
-    info     = "passed in log.data should be a list"
+    info     = "passed in logdata should be a list"
     )
   })
 
@@ -99,14 +99,14 @@ test_that("Methods that act on LoggingTuple class", {
     info = "Method get_logdata should be defined on LoggingTuple"
     )
   expect_equal(
-    object   = get_logdata(LoggingTuple(dataset = 123, log.data = list("LOG"))),
+    object   = get_logdata(LoggingTuple(dataset = 123, logdata = list("LOG"))),
     expected = list("LOG"),
     info     = "get_logdata should return the logdata entry"
     )
   expect_equal(
     object   = get_logdata(LoggingTuple(dataset = NA)),
     expected = list(),
-    info     = "get_logdata with default log.data value should return empty
+    info     = "get_logdata with default logdata value should return empty
 list"
     )
   })
@@ -147,7 +147,7 @@ test_that(
 
 ###############################################################################
 
-# LoggingTuple[A] is effectively list(dataset: A, log.data = list(ANY))
+# LoggingTuple[A] is effectively list(dataset: A, logdata = list(ANY))
 
 # LoggingStep abstract:
 # LoggingStep[A, B]: LoggingTuple[A] => LoggingTuple[B]
@@ -215,9 +215,9 @@ test_that("A NULL modifier and a NULL logger", {
 
   expect_equal(
     object = runner(.tuple = LoggingTuple(dataset  = 1:10,
-                                          log.data = list())),
+                                          logdata = list())),
     expected = LoggingTuple(dataset  = NULL,
-                            log.data = list(NULL)),
+                            logdata = list(NULL)),
     info = paste("With a NULL modifier and a NULL logger",
                  "result should be list(NULL, NULL)",
                  sep = ", ")
@@ -226,18 +226,18 @@ test_that("A NULL modifier and a NULL logger", {
   expect_equal(
     object = runner(.tuple = LoggingTuple(1)),
     expected = LoggingTuple(dataset = NULL,
-                    log.data = list(NULL)),
+                    logdata = list(NULL)),
     info   = paste("Single entry in dataset")
     )
 
   expect_equal(
     object = runner(.tuple = LoggingTuple(
                                    dataset = 1:10,
-                                   log.data = list("not an", "empty", "list"))
+                                   logdata = list("not an", "empty", "list"))
                    ),
     expected = LoggingTuple(
                     dataset = NULL,
-                    log.data = list("not an", "empty", "list", NULL)),
+                    logdata = list("not an", "empty", "list", NULL)),
     info = "Log for the current process should append to the existing log"
     )
 
@@ -262,7 +262,7 @@ test_that(
     object = runner(.tuple = LoggingTuple(1:10)),
     expected = LoggingTuple(
                     dataset = 1:10,
-                    log.data = list(NULL)),
+                    logdata = list(NULL)),
     info = "Non-empty input, modifier has no effect, logger should return NULL"
     )
   })
@@ -286,16 +286,16 @@ test_that(
     object = runner(.tuple = LoggingTuple(1:10)),
     expected = LoggingTuple(
                     dataset = 1:10,
-                    log.data = list(0)),
+                    logdata = list(0)),
     info = "Remove dups, log diff in size: Unique set, diff should be 0"
     )
   expect_equal(
     object = runner(.tuple = LoggingTuple(
                                    dataset = c(),
-                                   log.data = list(c()))),
+                                   logdata = list(c()))),
     expected = LoggingTuple(
                     dataset = c(),
-                    log.data = list(c(), 0)),
+                    logdata = list(c(), 0)),
     info = "Remove dups, log diff in size: Empty set, diff should be 0"
     )
   })
@@ -371,7 +371,7 @@ test_that("Example `flog` pipelines: invalid args", {
   lstep1 <- LoggingStep(mod1, log1)
 
   # TESTS:
-  # in.list or in.data must be provided
+  # in.list or in_data must be provided
   expect_error(
     object = flog(logsteps = lstep1),
     info = "check user provides .data to flog"
@@ -379,12 +379,12 @@ test_that("Example `flog` pipelines: invalid args", {
 
   # Either (modifiers & loggers) xor logsteps should be provided
   expect_error(
-    object = flog(.data = LoggingTuple(dataset = 1:3, log.data = list())),
+    object = flog(.data = LoggingTuple(dataset = 1:3, logdata = list())),
     info   = "user provides either (modifiers & loggers) or logsteps"
     )
   expect_error(
     object = flog(
-      .data     = LoggingTuple(dataset = 1:3, log.data = list()),
+      .data     = LoggingTuple(dataset = 1:3, logdata = list()),
       modifiers = mod1,
       loggers   = log1,
       logsteps  = lstep1
@@ -474,14 +474,14 @@ test_that("Example `flog` pipelines: using bare functions", {
   lstep2 <- LoggingStep(mod2, log_to_df)
 
   data.a <- c(letters[1:10], LETTERS[1:10])
-  tuple.a <- LoggingTuple(dataset = data.a, log.data = list())
+  tuple.a <- LoggingTuple(dataset = data.a, logdata = list())
 
   # as used in the examples
   data.b <- c("I'm", "spaRtacus")
 
   expect_equal(
     object   = flog(tuple.a, mod1, log1),
-    expected = LoggingTuple(dataset = data.a, log.data = list(0)),
+    expected = LoggingTuple(dataset = data.a, logdata = list(0)),
     info     = paste(
       "checks if dropping non-unique entries in a non-redundant vector has",
       "no effect; log the (non)changing length"
@@ -492,14 +492,14 @@ test_that("Example `flog` pipelines: using bare functions", {
     object = flog(tuple.a, mod2, log_to_df),
     expected = LoggingTuple(
       dataset = rep(letters[1:10], times = 2),
-      log.data = list(data.frame(before = 20, after = 20))
+      logdata = list(data.frame(before = 20, after = 20))
       ),
     info = "checks converting a-jA-J to lowercase, and 20 letters remain"
     )
 
   expect_equal(
     object   = flog(data.a, modifiers = mod1, loggers = log1),
-    expected = LoggingTuple(dataset = data.a, log.data = list(0)),
+    expected = LoggingTuple(dataset = data.a, logdata = list(0)),
     info     = paste(
       "checks raw-data input to .data instead of as LoggingTuple; single step
 pipeline"
@@ -513,7 +513,7 @@ pipeline"
       loggers   = log1
       ),
     expected = LoggingTuple(dataset = data.a,
-                            log.data = list("Pre-existing log", 0)),
+                            logdata = list("Pre-existing log", 0)),
     info = "check that the flog pipelines append to an existing log"
     )
 
@@ -523,7 +523,7 @@ pipeline"
     object = flog(tuple.a, c(mod1, mod2), c(log1, log_to_df)),
     expected = LoggingTuple(
       dataset = rep(letters[1:10], times = 2),
-      log.data = list(0, data.frame(before = 20, after = 20))
+      logdata = list(0, data.frame(before = 20, after = 20))
       ),
     info = paste("flog pipeline of length 2: doesn't affect input,",
                  "2 different modifiers, 2 different loggers")
@@ -536,7 +536,7 @@ pipeline"
     object   = flog(tuple.a, c(mod2, mod1), c(log_to_df, log1)),
     expected = LoggingTuple(
       dataset  = letters[1:10],
-      log.data = list(data.frame(before = 20, after = 20), 10)
+      logdata = list(data.frame(before = 20, after = 20), 10)
       ),
     info     = paste("flog pipeline of length 2: does affect input,",
                      "2 different modifiers, 2 different loggers")
@@ -568,7 +568,7 @@ loggers"
     object = flog(data.b, modifiers = tolower, loggers = log_to_df),
     expected = LoggingTuple(
       dataset = c("i'm", "spartacus"),
-      log.data = list(data.frame(before = 2, after = 2))
+      logdata = list(data.frame(before = 2, after = 2))
       ),
     info = "spaRtacus example as used in the Docs"
     )
@@ -592,14 +592,14 @@ test_that("Example `flog` pipelines: using LoggingStep objects", {
   lstep2 <- LoggingStep(mod2, log2)
 
   data.a <- c(letters[1:10], LETTERS[1:10])
-  tuple.a <- LoggingTuple(dataset = data.a, log.data = list())
+  tuple.a <- LoggingTuple(dataset = data.a, logdata = list())
 
   # TESTS:
   expect_equal(
     object   = flog(tuple.a, logsteps = lstep1),
     expected = LoggingTuple(
       dataset  = data.a,
-      log.data = list(0)
+      logdata = list(0)
       ),
     info = "unique as a flog pipeline on non-unique letters: in.list as input"
     )
@@ -608,16 +608,16 @@ test_that("Example `flog` pipelines: using LoggingStep objects", {
     object   = flog(.data = tolower(data.a), logsteps = lstep1),
     expected = LoggingTuple(
       dataset  = letters[1:10],
-      log.data = list(10)
+      logdata = list(10)
       ),
-    info = "unique as a flog pipeline on non-unique letters: in.data as input"
+    info = "unique as a flog pipeline on non-unique letters: in_data as input"
     )
 
   expect_equal(
     object   = flog(tuple.a, logsteps = list(lstep1)),
     expected = LoggingTuple(
       dataset  = data.a,
-      log.data = list(0)
+      logdata = list(0)
       ),
     info = "unique pipeline: logsteps as a list"
     )
@@ -626,7 +626,7 @@ test_that("Example `flog` pipelines: using LoggingStep objects", {
     object   = flog(tuple.a, logsteps = list(lstep1, lstep2)),
     expected = LoggingTuple(
       dataset  = rep(letters[1:10], times = 2),
-      log.data = list(0, data.frame(before = 20, after = 20))
+      logdata = list(0, data.frame(before = 20, after = 20))
       ),
     info = "unique pipeline: logsteps as a list"
     )
@@ -635,7 +635,7 @@ test_that("Example `flog` pipelines: using LoggingStep objects", {
 ###############################################################################
 
 test_that("`flog` using a named list of LoggingSteps, modifiers or loggers
-  should append the names to the log.data list that is returned", {
+  should append the names to the logdata list that is returned", {
   .data <- data.frame(a = 1:3, b = 4:6)
   nrow.logger <- function(
       post,
@@ -650,9 +650,9 @@ test_that("`flog` using a named list of LoggingSteps, modifiers or loggers
                   loggers = list(step1 = nrow.logger)),
     expected = LoggingTuple(
       dataset = .data,
-      log.data = list(step1 = 3)
+      logdata = list(step1 = 3)
       ),
-    info = "loggers in a named list: names should be passed to log.data"
+    info = "loggers in a named list: names should be passed to logdata"
     )
 
   expect_equal(
@@ -661,9 +661,9 @@ test_that("`flog` using a named list of LoggingSteps, modifiers or loggers
                   loggers   = nrow.logger),
     expected = LoggingTuple(
       dataset = .data,
-      log.data = list(step.a = 3)
+      logdata = list(step.a = 3)
       ),
-    info = "modifierss in a named list: names should be passed to log.data"
+    info = "modifierss in a named list: names should be passed to logdata"
     )
 })
 
@@ -674,9 +674,9 @@ test_that("Example of piping one flog command into another", {
   })
 
 ###############################################################################
-test_that("flog.filter_df: invalid inputs", {
+test_that("flog_filter_df: invalid inputs", {
   # - Most of these tests are performed by flog() at present, so not entirely
-  # useful as unit tests of flog.filter_df
+  # useful as unit tests of flog_filter_df
   nrow.logger <- function(
       post,
       pre
@@ -687,21 +687,21 @@ test_that("flog.filter_df: invalid inputs", {
   # Invalid inputs:
   # - Raw data should be a data.frame
   expect_error(
-    flog.filter_df("Not a list or data.frame"),
-    info = "input to flog.filter_df should be a data.frame or LoggingTuple
+    flog_filter_df("Not a list or data.frame"),
+    info = "input to flog_filter_df should be a data.frame or LoggingTuple
 containing a data.frame"
     )
 
   expect_error(
-    flog.filter_df(LoggingTuple("Not a data.frame")),
-    info = "LoggingTuple input to flog.filter_df should have data.frame as
+    flog_filter_df(LoggingTuple("Not a data.frame")),
+    info = "LoggingTuple input to flog_filter_df should have data.frame as
 dataset"
     )
 
   expect_error(
-    flog.filter_df(LoggingTuple(log.data = list(),
+    flog_filter_df(LoggingTuple(logdata = list(),
                                 dataset = "Not a data.frame"),
-                   filter.dots = "identity",
+                   filter_dots = "identity",
                    logger = nrow.logger
                    ),
     info = "LoggingTuple with named args should have data.frame as
@@ -709,8 +709,8 @@ dataset"
     )
 
   expect_error(
-    flog.filter_df(.data = "Not a data.frame",
-                   filter.dots = "identity",
+    flog_filter_df(.data = "Not a data.frame",
+                   filter_dots = "identity",
                    logger = nrow.logger),
     info = "If raw data is provided instead of LoggingTuple, it should be a
 data.frame"
@@ -718,34 +718,34 @@ data.frame"
 
   # - No .data defined
   expect_error(
-    flog.filter_df(filter.dots = "identity",
+    flog_filter_df(filter_dots = "identity",
                    logger      = nrow.logger),
-    info = "User should provide .data to flog.filter_df"
+    info = "User should provide .data to flog_filter_df"
     )
 
-  # - Both in.list and in.data are defined
+  # - Both in.list and in_data are defined
   expect_error(
-    flog.filter_df(in.list = list(data.frame()),
-                   filter.dots = "identity",
+    flog_filter_df(in.list = list(data.frame()),
+                   filter_dots = "identity",
                    logger = nrow.logger,
-                   in.data = data.frame()),
-    info = "User should provide only one of in.list or in.data"
+                   in_data = data.frame()),
+    info = "User should provide only one of in.list or in_data"
     )
-  # - filter.dots is not a vector of strings (OR [to implement] A list/vector
+  # - filter_dots is not a vector of strings (OR [to implement] A list/vector
   # or functions)
   expect_error(
-    flog.filter_df(in.list = list(data.frame()),
-                   filter.dots = 1,
+    flog_filter_df(in.list = list(data.frame()),
+                   filter_dots = 1,
                    logger = nrow.logger),
-    info = "filter.dots should be a vector of strings, a vector of functions,
+    info = "filter_dots should be a vector of strings, a vector of functions,
 or a list of strings and functions for use in filtering"
     )
-  # TODO: - filter.dots is a string but does not refer to a column in the
+  # TODO: - filter_dots is a string but does not refer to a column in the
   # data.frame (difficult to test for complex string-based filters)
   })
 
 ###############################################################################
-test_that("flog.filter_df", {
+test_that("flog_filter_df", {
   # SETUP:
   nrow.logger <- function(post, pre){
     data.frame(n = nrow(post))
@@ -757,11 +757,11 @@ test_that("flog.filter_df", {
   valid1.filt <- "identity"
   expected1   <- LoggingTuple(
     dataset  = valid1.df,
-    log.data = list(
-      data.frame(filter.name = "identity", n = 3L))
+    logdata = list(
+      data.frame(filter_name = "identity", n = 3L))
     )
   expect_equal(
-    object   = flog.filter_df(LoggingTuple(valid1.df),
+    object   = flog_filter_df(LoggingTuple(valid1.df),
                               valid1.filt,
                               nrow.logger
                               ),
@@ -781,11 +781,11 @@ test_that("flog.filter_df", {
                   a         = c(1, 3),
                   b         = c("a", "c")
                   ),
-    log.data = list(
-      data.frame(filter.name = "filter.me", n = 2L))
+    logdata = list(
+      data.frame(filter_name = "filter.me", n = 2L))
       )
   expect_equal(
-    object   = flog.filter_df(LoggingTuple(valid2.df),
+    object   = flog_filter_df(LoggingTuple(valid2.df),
                               valid2.filt,
                               nrow.logger),
     expected = expected2,
@@ -793,32 +793,32 @@ test_that("flog.filter_df", {
 rows"
     )
 
-  # - Input already has a log.data defined in in.list
+  # - Input already has a logdata defined in in.list
   valid3.tuple <- LoggingTuple(
     dataset  = DF(a = 1:3, b = letters[1:3]),
-    log.data = list(preceding.step = "Interesting result?")
+    logdata = list(preceding.step = "Interesting result?")
     )
   expect_equal(
-    object   = flog.filter_df(
+    object   = flog_filter_df(
       .data       = valid3.tuple,
-      filter.dots = "identity",
+      filter_dots = "identity",
       logger      = nrow.logger
       ),
     expected = LoggingTuple(
       dataset  = get_dataset(valid3.tuple),
-      log.data = list(
+      logdata = list(
         preceding.step = "Interesting result?",
-        data.frame(filter.name = "identity", n = 3L)
+        data.frame(filter_name = "identity", n = 3L)
         )
       ),
-    info = "Input that contains a pre-existing log.data entry, this should be
+    info = "Input that contains a pre-existing logdata entry, this should be
 appended to"
     )
 
   # TODO:
   # - Input with a factor in some column - factor levels should be unchanged
   # - String-based complex filter "column1 > 1 & !drop.me & keep.me" ?
-  # - Input provided as in.data rather than in.list
-  # - filter.dots with a named vector: names should be used instead of inferred
-  # from the string-values, when adding filter.name to $log.data data.frame
+  # - Input provided as in_data rather than in.list
+  # - filter_dots with a named vector: names should be used instead of inferred
+  # from the string-values, when adding filter_name to $logdata data.frame
   })

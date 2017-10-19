@@ -15,7 +15,7 @@ and the result of this pipeline is returned in the `dataset` entry of
 LoggingTuple output by `flog()`. After each modifier has been applied,
 the corresponding logger function is used to generate a summary of the
 differences to the dataset that were induced by the modifier function.
-The logging results are returned as the list `log.data` that is present
+The logging results are returned as the list `logdata` that is present
 in the returned LoggingTuple.}
 
 \item{modifiers}{A list of functions that sequentially
@@ -41,7 +41,7 @@ providing a pair of `modifiers` or `loggers` arguments to flog().}
 \value{
 A LoggingTuple, where the dataset entry
   is the result of running .data@dataset \%>\% modifiers1 \%>\% modifiers2
-  \%>\% ... \%>\% modifiersN and the log.data entry contains the logging
+  \%>\% ... \%>\% modifiersN and the logdata entry contains the logging
   information for each of the N processing steps (for the k'th step, this
   is given by comparing the input to the k'th modifier to the output from
   running the k'th modifier using the k'th logger function).
@@ -62,7 +62,7 @@ Runs a consecutive pipeline of functions (modifiers) on an input dataset
   valid input); see the examples - that's where the examples are.
 }
 \examples{
-  .tuple <- LoggingTuple(dataset = c(2, 1, 1), log.data = list())
+  .tuple <- LoggingTuple(dataset = c(2, 1, 1), logdata = list())
   logF <- function(post, pre){
     data.frame(before = length(pre), after = length(post))
     }
@@ -79,13 +79,13 @@ Runs a consecutive pipeline of functions (modifiers) on an input dataset
 
   flog(.tuple, c(unique, sort, sum), logF)
 
-  # You can use a raw dataset (ie, without log.data) as input as follows:
+  # You can use a raw dataset (ie, without logdata) as input as follows:
 
   my.data <- c("I'm", "spaRtacus")
   # - Explicit set-up of LoggingTuple:
-  #  flog(.data = LoggingTuple(dataset = my.data, log.data = list()),
+  #  flog(.data = LoggingTuple(dataset = my.data, logdata = list()),
   #       tolower, logF)
-  # - Implicit set-up of `dataset` and `log.data` entries of in.list:
+  # - Implicit set-up of `dataset` and `logdata` entries of in.list:
   #  flog(.data = LoggingTuple(my.data, list()), tolower, logF)
   #  flog(.data = LoggingTuple(my.data),         tolower, logF)
   # - Use bare dataset (and flog will convert it to a LoggingTuple)

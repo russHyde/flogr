@@ -24,7 +24,7 @@ Encapsulates a single data-manipulation function (`modifier`) and a single
   logging function (`logger`) to compare the input/output of `modifier`.
 The user should not use the (non-exported) `run_step` method of LoggingStep
   directly. They should always use `flog(in.list = some.list,
-  logsteps = LS)` or `flog(in.data = some.input, logsteps = LS)`.
+  logsteps = LS)` or `flog(in_data = some.input, logsteps = LS)`.
 
 Initialize method for LoggingStep
 }

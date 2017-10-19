@@ -5,18 +5,18 @@
 ###############################################################################
 # 2017-06-01
 # - Rewrite of functional_logger.R from my project `drug_markers`
-# - Functions flog() and flog.filter_df() originally admitted data input from
-# both in.list = list(dataset = data.set, log.data = list(...)) and from
-# in.data = data.set. This wasn't very clean, and required i) that the log.data
-# list was checked for presence, validity etc and ii) that dataset/log.data
-# names were checked in both flog() and flog.filter_df(). It also may lead to
+# - Functions flog() and flog_filter_df() originally admitted data input from
+# both in.list = list(dataset = data.set, logdata = list(...)) and from
+# in_data = data.set. This wasn't very clean, and required i) that the logdata
+# list was checked for presence, validity etc and ii) that dataset/logdata
+# names were checked in both flog() and flog_filter_df(). It also may lead to
 # some ambiguity when the intended in.list `dataset` is a list.
 # - To relieve these issues, we introduce a lightweight class `LoggingTuple`
-# that holds the `dataset` and `log.data` values that are passed through a
+# that holds the `dataset` and `logdata` values that are passed through a
 # flog-based pipeline. This class is unlikely to be used as the `dataset`
 # passed into a pipeline, so should lead to less ambiguity, and we can add a
 # quick data-to-LoggingTuple function call at the start of both flog() and
-# flog.filter_df() (and future functions along this line).
+# flog_filter_df() (and future functions along this line).
 #
 
 ###############################################################################
@@ -95,7 +95,7 @@ null_logger <- function(post, pre){
 nrow_logger <- function(post, pre){
   data.frame(
     dataset = c(pre, post),
-    n.row   = c(nrow(pre), nrow(post))
+    n_row   = c(nrow(pre), nrow(post))
     )
   }
 
@@ -108,7 +108,7 @@ nrow_logger <- function(post, pre){
 #' that resulted in the generation of the current dataset.
 #'
 #' @param        dataset       May be any datatype, but must be defined.
-#' @param        log.data      A list. If missing, this is set to the empty
+#' @param        logdata      A list. If missing, this is set to the empty
 #'   list.
 #'
 #' @name         LoggingTuple-class
@@ -120,7 +120,7 @@ LoggingTuple <- methods::setClass(
   "LoggingTuple",
   slots = list(
     dataset  = "ANY",
-    log.data = "list"
+    logdata = "list"
     )
   )
 
@@ -136,11 +136,11 @@ methods::setMethod(
   definition = function(
       .Object,
       dataset,
-      log.data = list()
+      logdata = list()
     ){
-    .Object          <- methods::callNextMethod()
-    .Object@dataset  <- dataset
-    .Object@log.data <- log.data
+    .Object         <- methods::callNextMethod()
+    .Object@dataset <- dataset
+    .Object@logdata <- logdata
     .Object
     }
   )
@@ -192,7 +192,7 @@ methods::setMethod(
   f          = "get_logdata",
   signature  = "LoggingTuple",
   definition = function(object){
-    object@log.data
+    object@logdata
     }
   )
 
@@ -204,7 +204,7 @@ methods::setMethod(
 #'   logging function (`logger`) to compare the input/output of `modifier`.
 #' The user should not use the (non-exported) `run_step` method of LoggingStep
 #'   directly. They should always use `flog(in.list = some.list,
-#'   logsteps = LS)` or `flog(in.data = some.input, logsteps = LS)`.
+#'   logsteps = LS)` or `flog(in_data = some.input, logsteps = LS)`.
 #'
 #' @param        modifier      A function that modifies a given dataset. This
 #'   must be able
@@ -244,7 +244,7 @@ methods::setMethod(
   signature = "LoggingStep",
   definition = function(
       .Object,
-      modifier = function(in.data) NULL,
+      modifier = function(in_data) NULL,
       logger   = function(post, pre) NULL
     ){
     .Object          <- methods::callNextMethod()
@@ -286,9 +286,9 @@ methods::setValidity(
 #'
 #' Non-exported function: User must use flog() to apply a LoggingStep.
 #'
-#' Given an input dataset (as part of a list(dataset, log.data)), the functions
+#' Given an input dataset (as part of a list(dataset, logdata)), the functions
 #'   returned by .run_step will apply a `modifier` function to  that dataset and
-#'   append a log of the changes to log.data
+#'   append a log of the changes to logdata
 #'
 #' @param        object        A LoggingStep object, or a subclass thereof.
 #'
@@ -311,13 +311,13 @@ methods::setMethod(
   methods::signature(object = "LoggingStep"),
   definition = function(
       object,
-      step.name = NULL
+      step_name = NULL
     ){
-    # TODO: Validity test on step.name
+    # TODO: Validity test on step_name
 
     function(.tuple){
       # Input to the function built by .run_step should always be a
-      # LoggingTuple and therefore have a defined @dataset and @log.data entry,
+      # LoggingTuple and therefore have a defined @dataset and @logdata entry,
       # which can be accessed using get_dataset and get_logdata
       stopifnot(methods::is(.tuple, "LoggingTuple"))
 
@@ -329,11 +329,11 @@ methods::setMethod(
       logger      <- object@logger
       new_dataset <- modifier(get_dataset(.tuple))
       log_entry   <- logger(new_dataset, get_dataset(.tuple))
-      log_entry_list <- list(log_entry) %>% setNames(step.name)
+      log_entry_list <- list(log_entry) %>% setNames(step_name)
 
       LoggingTuple(
         dataset = new_dataset,
-        log.data = append(
+        logdata = append(
           get_logdata(.tuple),
           log_entry_list
           )
@@ -345,14 +345,14 @@ methods::setMethod(
 ###############################################################################
 
 # TODO: update all documentation / examples
-# - use .data instead of in.list or in.data
-# - refer to LoggingTuple rather than list(dataset, log.data)
+# - use .data instead of in.list or in_data
+# - refer to LoggingTuple rather than list(dataset, logdata)
 
 # TODO: add vectorised logsteps to examples section, ie,
 # -   piped.data %>% flog(
 #       logsteps = c(lstep1, lstep2)
 #       )
-# TODO: Ensure names are passed from logsteps to log.data
+# TODO: Ensure names are passed from logsteps to logdata
 
 #' flog: functional logging for R pipelines
 #'
@@ -378,7 +378,7 @@ methods::setMethod(
 #'   LoggingTuple output by `flog()`. After each modifier has been applied,
 #'   the corresponding logger function is used to generate a summary of the
 #'   differences to the dataset that were induced by the modifier function.
-#'   The logging results are returned as the list `log.data` that is present
+#'   The logging results are returned as the list `logdata` that is present
 #'   in the returned LoggingTuple.
 #'
 #' @param        modifiers     A list of functions that sequentially
@@ -403,7 +403,7 @@ methods::setMethod(
 #'
 #' @return       A LoggingTuple, where the dataset entry
 #'   is the result of running .data@dataset \%>\% modifiers1 \%>\% modifiers2
-#'   \%>\% ... \%>\% modifiersN and the log.data entry contains the logging
+#'   \%>\% ... \%>\% modifiersN and the logdata entry contains the logging
 #'   information for each of the N processing steps (for the k'th step, this
 #'   is given by comparing the input to the k'th modifier to the output from
 #'   running the k'th modifier using the k'th logger function).
@@ -413,7 +413,7 @@ methods::setMethod(
 #' @export
 #'
 #' @examples
-#'   .tuple <- LoggingTuple(dataset = c(2, 1, 1), log.data = list())
+#'   .tuple <- LoggingTuple(dataset = c(2, 1, 1), logdata = list())
 #'   logF <- function(post, pre){
 #'     data.frame(before = length(pre), after = length(post))
 #'     }
@@ -430,13 +430,13 @@ methods::setMethod(
 #'
 #'   flog(.tuple, c(unique, sort, sum), logF)
 #'
-#'   # You can use a raw dataset (ie, without log.data) as input as follows:
+#'   # You can use a raw dataset (ie, without logdata) as input as follows:
 #'
 #'   my.data <- c("I'm", "spaRtacus")
 #'   # - Explicit set-up of LoggingTuple:
-#'   #  flog(.data = LoggingTuple(dataset = my.data, log.data = list()),
+#'   #  flog(.data = LoggingTuple(dataset = my.data, logdata = list()),
 #'   #       tolower, logF)
-#'   # - Implicit set-up of `dataset` and `log.data` entries of in.list:
+#'   # - Implicit set-up of `dataset` and `logdata` entries of in.list:
 #'   #  flog(.data = LoggingTuple(my.data, list()), tolower, logF)
 #'   #  flog(.data = LoggingTuple(my.data),         tolower, logF)
 #'   # - Use bare dataset (and flog will convert it to a LoggingTuple)
@@ -501,22 +501,22 @@ flog <- function(
         list(.x)
         }
       }
-    mod.list <- .uplist(modifiers)
-    log.list <- .uplist(loggers)
-    step.names <- if (length(names(log.list)) > length(names(mod.list))) {
-      names(log.list)
+    mod_list <- .uplist(modifiers)
+    log_list <- .uplist(loggers)
+    step_names <- if (length(names(log_list)) > length(names(mod_list))) {
+      names(log_list)
       } else {
-      names(mod.list)
+      names(mod_list)
       }
 
     logsteps <- Map(
       function(mod_fn, log_fn){
         LoggingStep(mod_fn, log_fn)
         },
-      mod.list,
-      log.list
+      mod_list,
+      log_list
       ) %>%
-      setNames(step.names)
+      setNames(step_names)
     } else {
     if (!missing(modifiers) || !missing(loggers)) {
       stop("logsteps or (modifiers & loggers) should be defined, but not both")
@@ -534,28 +534,28 @@ flog <- function(
     )
 
   # Recursively run the LoggingSteps over the input data
-  # This constructs: in.data %>% mod1 %>% mod2 %>% ... %>% modN
+  # This constructs: in_data %>% mod1 %>% mod2 %>% ... %>% modN
   #   as the first component of the output, where modX is the modifier function
   #   for LoggingStep `X`
   # And the second component of the output is a length-N list containing the
   #   logging notes re each of the N steps
-  go <- function(in.tuple, lsteps){
+  go <- function(in_tuple, lsteps){
     if (methods::is(lsteps, "LoggingStep")) {
-      return(.run_step(lsteps)(in.tuple))
+      return(.run_step(lsteps)(in_tuple))
       }
     if (length(lsteps) == 0) {
-      return(in.tuple)
+      return(in_tuple)
       } else {
-      step.name <- if (is.null(names(lsteps))) {
+      step_name <- if (is.null(names(lsteps))) {
         NULL
         } else {
         names(lsteps)[1]
         }
       return(
         go(
-          in.tuple = .run_step(object    = lsteps[[1]],
-                               step.name = step.name
-                               )(in.tuple),
+          in_tuple = .run_step(object    = lsteps[[1]],
+                               step_name = step_name
+                               )(in_tuple),
           lsteps   = lsteps[-1]
           )
         )
@@ -567,18 +567,18 @@ flog <- function(
 
 ##############################################################################
 
-#' flog.filter_df
+#' flog_filter_df
 #'
 #'
 #' Applies a sequence of filtering steps to a data.frame and returns a
-#' (dataset, log.data) tuple where the log.data list contains a single
+#' (dataset, logdata) tuple where the logdata list contains a single
 #' data.frame generated by combining the results of each individual logging
 #' function
 #'
 #' @param        .data         A LoggingTuple or a raw dataset. The dataset
 #'   entry should be a data.frame. See drug.markers::flog.
 #'
-#' @param        filter.dots   A vector or list of strings that define the
+#' @param        filter_dots   A vector or list of strings that define the
 #' filters that shouold be applied to a data.frame; each of these should be a
 #' valid input to the .dots arg of dplyr::filter_. If any of the entries is
 #' "identity", then the data.frame that is passed in is unaltered by that
@@ -587,7 +587,7 @@ flog <- function(
 #' @param        logger        A single logging function(post, pre) for
 #' comparing a dataframe after a single filtering step (post) to the dataframe
 #' that before that step (pre). See drug.markers::flog for more details. This
-#' logging function is applied after each filtering step in filter.dots has
+#' logging function is applied after each filtering step in filter_dots has
 #' ran.
 #'
 #' @importFrom   dplyr         bind_rows   filter_   mutate_
@@ -596,9 +596,9 @@ flog <- function(
 #'
 #' @export
 #'
-flog.filter_df <- function(
+flog_filter_df <- function(
     .data,
-    filter.dots,
+    filter_dots,
     logger
   ){
   # TODO: Remove these validity tests, since they're copied in from flog()
@@ -620,7 +620,7 @@ flog.filter_df <- function(
   # TODO: pull this out as non-exported function .flog_filter_maker and unit
   #   test it
   # TODO: If .dots is a function, return that function
-  # Converts a string into a filter-function for use in flog.filter_df
+  # Converts a string into a filter-function for use in flog_filter_df
   filter_maker <- function(.dots){
     if (.dots == "identity") {
       return(identity)
@@ -635,16 +635,16 @@ flog.filter_df <- function(
 
   stopifnot(is.data.frame(get_dataset(tuple)))
 
-  # TODO: Test to check that existing log.data is neither bind_row'ed nor
+  # TODO: Test to check that existing logdata is neither bind_row'ed nor
   # dropped nor causes errors (I think this is only possible if the logger
   # could return NULL for some input)
   # TODO: rewrite as an extension to the LoggingStep class
   # TODO: OR write a flog_and_logCollapse function and use this
-  # TODO: named steps in the log.data in `result`
+  # TODO: named steps in the logdata in `result`
   # Assumes that the output from logger is a data.frame
   # Combines multiple, string-form filters, each to be applied sequentially,
   #   into a single flog-type function
-  modifiers      <- Map(filter_maker, filter.dots)
+  modifiers      <- Map(filter_maker, filter_dots)
   modifier_names <- names(modifiers)
 
   fd <- flog(.data     = get_dataset(tuple),
@@ -655,15 +655,15 @@ flog.filter_df <- function(
   new_log_value <- get_logdata(fd) %>%
     setNames(modifier_names) %>%
     # TODO: check for NULL-offset bug within rbind_all / bind_rows in dplyr-0.5
-    dplyr::bind_rows(.id = "filter.name") %>%
+    dplyr::bind_rows(.id = "filter_name") %>%
     dplyr::mutate_(
-      filter.name = ~ factor(filter.name, levels = modifier_names)
+      filter_name = ~ factor(filter_name, levels = modifier_names)
       ) %>%
     as.data.frame(stringsAsFactors = FALSE)
 
   result <- LoggingTuple(
     dataset  = get_dataset(fd),
-    log.data = append(get_logdata(tuple), list(new_log_value))
+    logdata = append(get_logdata(tuple), list(new_log_value))
     )
   result
   }

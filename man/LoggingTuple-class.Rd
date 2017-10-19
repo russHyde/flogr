@@ -8,7 +8,7 @@
 \arguments{
 \item{dataset}{May be any datatype, but must be defined.}
 
-\item{log.data}{A list. If missing, this is set to the empty
+\item{logdata}{A list. If missing, this is set to the empty
 list.}
 }
 \description{
