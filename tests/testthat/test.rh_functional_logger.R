@@ -306,17 +306,17 @@ test_that(
   paste("The logger function in a LoggingStep should take `post` and",
         "(optionally) `pre` as its first and second arguments"), {
 
-  no.pre.data       <- function(post)               TRUE
-  no.post.data      <- function(pre)                TRUE
-  wrong.order       <- function(pre, post)          TRUE
+  no_pre_data       <- function(post)               TRUE
+  no_post_data      <- function(pre)                TRUE
+  wrong_order       <- function(pre, post)          TRUE
   misspelled        <- function(Post, pRe)          TRUE
-  pre.should.be.2nd <- function(post, not.pre, pre) TRUE
+  pre_should_be_2nd <- function(post, not.pre, pre) TRUE
 
   expect_error(
     # expect_no_error => see regexp = NA
     object = LoggingStep(
       modifier = identity,
-      logger   = no.pre.data
+      logger   = no_pre_data
       ),
     regexp = NA,
     info = paste("checks that no error occurs when logger's only argument is",
@@ -326,7 +326,7 @@ test_that(
   expect_error(
     object = LoggingStep(
       modifier = identity,
-      logger   = no.post.data
+      logger   = no_post_data
       ),
     info = "`post` is not an argument in the input to LoggingStep::logger"
     )
@@ -334,7 +334,7 @@ test_that(
   expect_error(
     object = LoggingStep(
       modifier = identity,
-      logger   = wrong.order
+      logger   = wrong_order
       ),
     info = paste("`post`/`pre` are incorrectly ordered as args to",
                  "LoggingStep::logger")
@@ -352,7 +352,7 @@ test_that(
   expect_error(
     object = LoggingStep(
       modifier = identity,
-      logger   = pre.should.be.2nd
+      logger   = pre_should_be_2nd
       ),
     info = paste("If `pre` is provided, it should come second in the args",
                  "list to LoggingStep::logger")
@@ -468,10 +468,10 @@ test_that("Example `flog` pipelines: using bare functions", {
   lstep1 <- LoggingStep(mod1, log1)
 
   mod2 <- tolower
-  log.to.df <- function(post, pre){
+  log_to_df <- function(post, pre){
     data.frame(before = length(pre), after = length(post))
     }
-  lstep2 <- LoggingStep(mod2, log.to.df)
+  lstep2 <- LoggingStep(mod2, log_to_df)
 
   data.a <- c(letters[1:10], LETTERS[1:10])
   tuple.a <- LoggingTuple(dataset = data.a, log.data = list())
@@ -489,7 +489,7 @@ test_that("Example `flog` pipelines: using bare functions", {
     )
 
   expect_equal(
-    object = flog(tuple.a, mod2, log.to.df),
+    object = flog(tuple.a, mod2, log_to_df),
     expected = LoggingTuple(
       dataset = rep(letters[1:10], times = 2),
       log.data = list(data.frame(before = 20, after = 20))
@@ -520,7 +520,7 @@ pipeline"
   # pipeline, length 2
   # - unique then tolower
   expect_equal(
-    object = flog(tuple.a, c(mod1, mod2), c(log1, log.to.df)),
+    object = flog(tuple.a, c(mod1, mod2), c(log1, log_to_df)),
     expected = LoggingTuple(
       dataset = rep(letters[1:10], times = 2),
       log.data = list(0, data.frame(before = 20, after = 20))
@@ -533,7 +533,7 @@ pipeline"
   # - tolower then unique - once in lower case, 10 of the letters are repeated
   # -
   expect_equal(
-    object   = flog(tuple.a, c(mod2, mod1), c(log.to.df, log1)),
+    object   = flog(tuple.a, c(mod2, mod1), c(log_to_df, log1)),
     expected = LoggingTuple(
       dataset  = letters[1:10],
       log.data = list(data.frame(before = 20, after = 20), 10)
@@ -554,18 +554,18 @@ pipeline"
 
   # Repeat, but with multiple loggers and a single modifier
   expect_equal(
-    object   = flog(tuple.a, mod2,          c(log1, log.to.df)),
-    expected = flog(tuple.a, c(mod2, mod2), c(log1, log.to.df)),
+    object   = flog(tuple.a, mod2,          c(log1, log_to_df)),
+    expected = flog(tuple.a, c(mod2, mod2), c(log1, log_to_df)),
     info     = "flog pipeline of length 2: does affect input, 1 modifier, 2
 loggers"
     )
 
   # Check Spartacus example - as used in the docs
   # - this failed on initial writing, because I didn't give explicit named
-  #     arguments for modifiers and loggers; positionally, tolower/log.to.df
+  #     arguments for modifiers and loggers; positionally, tolower/log_to_df
   #     were read in as in.list/modifiers, respectively
   expect_equal(
-    object = flog(data.b, modifiers = tolower, loggers = log.to.df),
+    object = flog(data.b, modifiers = tolower, loggers = log_to_df),
     expected = LoggingTuple(
       dataset = c("i'm", "spartacus"),
       log.data = list(data.frame(before = 2, after = 2))
