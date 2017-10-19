@@ -55,6 +55,7 @@
 #' @description  Unnecessary description for NULL function
 #'
 #' @importFrom   methods       callNextMethod
+#' @importFrom   methods       is
 #' @importFrom   methods       new
 #' @importFrom   methods       setValidity
 #' @importFrom   methods       setClass
@@ -302,6 +303,8 @@ methods::setGeneric(".run_step")
 #' @param        object        A LoggingStep object, or a subclass thereof.
 #' @name         .run_step
 #'
+#' @importFrom   magrittr      %>%
+#'
 methods::setMethod(
   ".run_step",
   methods::signature(object = "LoggingStep"),
@@ -315,7 +318,7 @@ methods::setMethod(
       # Input to the function built by .run_step should always be a
       # LoggingTuple and therefore have a defined @dataset and @log.data entry,
       # which can be accessed using get_dataset and get_logdata
-      stopifnot(is(.tuple, "LoggingTuple"))
+      stopifnot(methods::is(.tuple, "LoggingTuple"))
 
       # Apply the modifier function to the dataset, compute any logging
       # information based on the results of applying the modifier, and then
@@ -444,13 +447,13 @@ flog <- function(
     loggers,
     logsteps
   ){
-  if (missing(.data)){
+  if (missing(.data)) {
     stop(".data should be defined in flog()")
     }
 
   # Validity tests on .data
   # - If it isn't a LoggingTuple, it should be converted to one.
-  if (is(.data, "LoggingTuple")){
+  if (methods::is(.data, "LoggingTuple")) {
     tuple <- .data
     } else {
     tuple <- LoggingTuple(.data)
@@ -465,20 +468,20 @@ flog <- function(
   #     provided, this is created using the modifiers and loggers lists
   # - Then we check that each entry of logsteps is of class LoggingStep
   #     so that we can use each of them in this pipeline of LoggingSteps
-  if (missing(logsteps)){
-    if (missing(modifiers) || missing(loggers)){
+  if (missing(logsteps)) {
+    if (missing(modifiers) || missing(loggers)) {
       stop("neither logsteps nor (modifiers & loggers) were defined in flog")
       }
-    if (length(loggers) == 0){
+    if (length(loggers) == 0) {
       stop("at least one logger is required if logsteps are not provided")
       }
-    if (length(modifiers) == 0){
+    if (length(modifiers) == 0) {
       stop("at least one modifier is required if logsteps are not provided")
       }
     if (length(modifiers) > 1 &&
        length(loggers)   > 1 &&
        length(modifiers) != length(loggers)
-       ){
+       ) {
       stop(
         paste("if the modifiers/loggers have length > 1, then their lengths",
               "should be identical")
@@ -491,7 +494,7 @@ flog <- function(
     # - Therere, we have to convert singleton functions into a list before
     #     using Map())
     .uplist <- function(.x){
-      if (is.list(.x)){
+      if (is.list(.x)) {
         .x
         } else {
         list(.x)
@@ -499,7 +502,7 @@ flog <- function(
       }
     mod.list <- .uplist(modifiers)
     log.list <- .uplist(loggers)
-    step.names <- if (length(names(log.list)) > length(names(mod.list))){
+    step.names <- if (length(names(log.list)) > length(names(mod.list))) {
       names(log.list)
       } else {
       names(mod.list)
@@ -514,7 +517,7 @@ flog <- function(
       ) %>%
       setNames(step.names)
     } else {
-    if (!missing(modifiers) || !missing(loggers)){
+    if (!missing(modifiers) || !missing(loggers)) {
       stop("logsteps or (modifiers & loggers) should be defined, but not both")
       }
     }
@@ -524,8 +527,8 @@ flog <- function(
   stopifnot(
     length(logsteps) > 0 &&
     (
-      is(logsteps, "LoggingStep") ||
-      all(sapply(logsteps, function(x) is(x, "LoggingStep")))
+      methods::is(logsteps, "LoggingStep") ||
+      all(sapply(logsteps, function(x) methods::is(x, "LoggingStep")))
       )
     )
 
@@ -536,13 +539,13 @@ flog <- function(
   # And the second component of the output is a length-N list containing the
   #   logging notes re each of the N steps
   go <- function(in.tuple, lsteps){
-    if (is(lsteps, "LoggingStep")){
+    if (methods::is(lsteps, "LoggingStep")) {
       return(.run_step(lsteps)(in.tuple))
       }
-    if (length(lsteps) == 0){
+    if (length(lsteps) == 0) {
       return(in.tuple)
       } else {
-      step.name <- if (is.null(names(lsteps))){
+      step.name <- if (is.null(names(lsteps))) {
         NULL
         } else {
         names(lsteps)[1]
@@ -601,13 +604,13 @@ flog.filter_df <- function(
   # ... or move the validity test and manipulation step to a separate function
   # ... that returns a LoggingTuple
 
-  if (missing(.data)){
+  if (missing(.data)) {
     stop(".data should be defined in flog()")
     }
 
   # Validity tests on .data
   # - If it isn't a LoggingTuple, it should be converted to one.
-  if (is(.data, "LoggingTuple")){
+  if (methods::is(.data, "LoggingTuple")) {
     tuple <- .data
     } else {
     tuple <- LoggingTuple(.data)
@@ -618,7 +621,7 @@ flog.filter_df <- function(
   # TODO: If .dots is a function, return that function
   # Converts a string into a filter-function for use in flog.filter_df
   filter_maker <- function(.dots){
-    if (.dots == "identity"){
+    if (.dots == "identity") {
       return(identity)
       } else {
       return(
@@ -651,8 +654,8 @@ flog.filter_df <- function(
   new.log.value <- get_logdata(fd) %>%
     setNames(modifier.names) %>%
     # TODO: check for NULL-offset bug within rbind_all / bind_rows in dplyr-0.5
-    bind_rows(.id = "filter.name") %>%
-    mutate_(
+    dplyr::bind_rows(.id = "filter.name") %>%
+    dplyr::mutate_(
       filter.name = ~ factor(filter.name, levels = modifier.names)
       ) %>%
     as.data.frame(stringsAsFactors = FALSE)
