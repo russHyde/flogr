@@ -266,17 +266,17 @@ methods::setValidity(
     #   and (optionally) a second argument named 'pre'; that is, if the
     #   function has more than one argument, the second should be called
     #   'pre'
-    f.names <- names(formals(object@logger))
-    correct.first.arg  <- length(f.names) >= 1 &&
-                          f.names[1] == "post"
+    f_names <- names(formals(object@logger))
+    correct_first_arg  <- length(f_names) >= 1 &&
+                          f_names[1] == "post"
 
-    correct.second.arg <- length(f.names) >= 2 &&
-                          f.names[2] == "pre"
+    correct_second_arg <- length(f_names) >= 2 &&
+                          f_names[2] == "pre"
 
-    correct.args <- correct.first.arg &&
-                    (length(f.names) == 1 || correct.second.arg)
+    correct_args <- correct_first_arg &&
+                    (length(f_names) == 1 || correct_second_arg)
 
-    correct.args
+    correct_args
   })
 
 ###############################################################################
@@ -326,15 +326,15 @@ methods::setMethod(
       # the existing logging data if any was present)
       modifier    <- object@modifier
       logger      <- object@logger
-      new.dataset <- modifier(get_dataset(.tuple))
-      log.entry   <- logger(new.dataset, get_dataset(.tuple))
-      log.entry.list <- list(log.entry) %>% setNames(step.name)
+      new_dataset <- modifier(get_dataset(.tuple))
+      log_entry   <- logger(new_dataset, get_dataset(.tuple))
+      log_entry_list <- list(log_entry) %>% setNames(step.name)
 
       LoggingTuple(
-        dataset = new.dataset,
+        dataset = new_dataset,
         log.data = append(
           get_logdata(.tuple),
-          log.entry.list
+          log_entry_list
           )
         )
       }
@@ -644,25 +644,25 @@ flog.filter_df <- function(
   # Combines multiple, string-form filters, each to be applied sequentially,
   #   into a single flog-type function
   modifiers      <- Map(filter_maker, filter.dots)
-  modifier.names <- names(modifiers)
+  modifier_names <- names(modifiers)
 
   fd <- flog(.data     = get_dataset(tuple),
              modifiers = modifiers,
              loggers   = logger
              )
 
-  new.log.value <- get_logdata(fd) %>%
-    setNames(modifier.names) %>%
+  new_log_value <- get_logdata(fd) %>%
+    setNames(modifier_names) %>%
     # TODO: check for NULL-offset bug within rbind_all / bind_rows in dplyr-0.5
     dplyr::bind_rows(.id = "filter.name") %>%
     dplyr::mutate_(
-      filter.name = ~ factor(filter.name, levels = modifier.names)
+      filter.name = ~ factor(filter.name, levels = modifier_names)
       ) %>%
     as.data.frame(stringsAsFactors = FALSE)
 
   result <- LoggingTuple(
     dataset  = get_dataset(fd),
-    log.data = append(get_logdata(tuple), list(new.log.value))
+    log.data = append(get_logdata(tuple), list(new_log_value))
     )
   result
   }
