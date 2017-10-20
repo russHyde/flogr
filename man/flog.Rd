@@ -81,15 +81,15 @@ Runs a consecutive pipeline of functions (modifiers) on an input dataset
 
   # You can use a raw dataset (ie, without logdata) as input as follows:
 
-  my.data <- c("I'm", "spaRtacus")
+  my_data <- c("I'm", "spaRtacus")
   # - Explicit set-up of LoggingTuple:
-  #  flog(.data = LoggingTuple(dataset = my.data, logdata = list()),
+  #  flog(.data = LoggingTuple(dataset = my_data, logdata = list()),
   #       tolower, logF)
-  # - Implicit set-up of `dataset` and `logdata` entries of in.list:
-  #  flog(.data = LoggingTuple(my.data, list()), tolower, logF)
-  #  flog(.data = LoggingTuple(my.data),         tolower, logF)
+  # - Implicit set-up of `dataset` and `logdata` entries of in_list:
+  #  flog(.data = LoggingTuple(my_data, list()), tolower, logF)
+  #  flog(.data = LoggingTuple(my_data),         tolower, logF)
   # - Use bare dataset (and flog will convert it to a LoggingTuple)
-  flog(my.data, modifiers = tolower, loggers = logF)
+  flog(my_data, modifiers = tolower, loggers = logF)
 
 }
 
