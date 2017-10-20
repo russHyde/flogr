@@ -69,7 +69,6 @@ NULL
 
 # Typical loggers:
 
-
 #' null_logger: Logs no information about the changes induced by a modifier in
 #'   a LoggingStep.
 #'
@@ -344,6 +343,31 @@ methods::setMethod(
 
 ###############################################################################
 
+#' .make_logging_tuple: Converts a dataset into a LoggingTuple (unless it already is
+#'   one)
+#'
+#' @param        .data         Any dataset. If it is a LoggingTuple, it is
+#'   returned unchanged. Otherwise, it is turned into a LoggingTuple, with
+#'   dataset entry equal to .data.
+#'
+#' @return       A LoggingTuple
+#'
+.make_logging_tuple <- function(.data){
+  if (missing(.data)) {
+    stop(".data should be defined")
+    }
+
+  # Validity tests on .data
+  # - If it isn't a LoggingTuple, it should be converted to one.
+  if (methods::is(.data, "LoggingTuple")) {
+    .data
+    } else {
+    LoggingTuple(.data)
+    }
+  }
+
+###############################################################################
+
 # TODO: update all documentation / examples
 # - use .data instead of in.list or in_data
 # - refer to LoggingTuple rather than list(dataset, logdata)
@@ -448,17 +472,8 @@ flog <- function(
     loggers,
     logsteps
   ){
-  if (missing(.data)) {
-    stop(".data should be defined in flog()")
-    }
-
-  # Validity tests on .data
-  # - If it isn't a LoggingTuple, it should be converted to one.
-  if (methods::is(.data, "LoggingTuple")) {
-    tuple <- .data
-    } else {
-    tuple <- LoggingTuple(.data)
-    }
+  # Validity check and convert .data into a LoggingTuple
+  tuple <- .make_logging_tuple(.data)
 
   # START of logsteps definition
   # TODO: move this wiry code into a separate function
@@ -601,21 +616,8 @@ flog_filter_df <- function(
     filter_dots,
     logger
   ){
-  # TODO: Remove these validity tests, since they're copied in from flog()
-  # ... or move the validity test and manipulation step to a separate function
-  # ... that returns a LoggingTuple
-
-  if (missing(.data)) {
-    stop(".data should be defined in flog()")
-    }
-
-  # Validity tests on .data
-  # - If it isn't a LoggingTuple, it should be converted to one.
-  if (methods::is(.data, "LoggingTuple")) {
-    tuple <- .data
-    } else {
-    tuple <- LoggingTuple(.data)
-    }
+  # Validity check and convert .data into a LoggingTuple
+  tuple <- .make_logging_tuple(.data)
 
   # TODO: pull this out as non-exported function .flog_filter_maker and unit
   #   test it
