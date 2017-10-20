@@ -6,11 +6,11 @@
 # 2017-06-01
 # - Rewrite of functional_logger.R from my project `drug_markers`
 # - Functions flog() and flog_filter_df() originally admitted data input from
-# both in.list = list(dataset = data.set, logdata = list(...)) and from
+# both in_list = list(dataset = data.set, logdata = list(...)) and from
 # in_data = data.set. This wasn't very clean, and required i) that the logdata
 # list was checked for presence, validity etc and ii) that dataset/logdata
 # names were checked in both flog() and flog_filter_df(). It also may lead to
-# some ambiguity when the intended in.list `dataset` is a list.
+# some ambiguity when the intended in_list `dataset` is a list.
 # - To relieve these issues, we introduce a lightweight class `LoggingTuple`
 # that holds the `dataset` and `logdata` values that are passed through a
 # flog-based pipeline. This class is unlikely to be used as the `dataset`
@@ -31,22 +31,17 @@
 #
 ###############################################################################
 
-# RH-style for names:
+# RH-style for names (as of 2017-10-20):
 #
 # ThisIsAClass
 # this_is_a_function
 # - no dots in function names
-# - unless function is of a particular subtype of function in which
-#     case the function type comes first: eg, filter.some_specific_name,
-#     builder.some_class_of_function, plot.some_kind_of_plot)
-# this.is.a.variable
+# - First word in function-name should be a verb (unless descriptive of a class
+#   of functions: dl_xxx_yyy, filter_xxx_yyy, build_xxx_yyy, pipeline_xxx_yyy)
+# this_is_a_variable
 # Non-exported functions prefixed with '.'
 #
 # Use 2-spaces, no-tabs
-
-# TODO: change formatting
-# Variables and column names should not have '.'-separated names
-# Nor should function types have '.'-separated prefixes
 
 ###############################################################################
 
@@ -202,7 +197,7 @@ methods::setMethod(
 #' Encapsulates a single data-manipulation function (`modifier`) and a single
 #'   logging function (`logger`) to compare the input/output of `modifier`.
 #' The user should not use the (non-exported) `run_step` method of LoggingStep
-#'   directly. They should always use `flog(in.list = some.list,
+#'   directly. They should always use `flog(in_list = some.list,
 #'   logsteps = LS)` or `flog(in_data = some.input, logsteps = LS)`.
 #'
 #' @param        modifier      A function that modifies a given dataset. This
@@ -343,8 +338,8 @@ methods::setMethod(
 
 ###############################################################################
 
-#' .make_logging_tuple: Converts a dataset into a LoggingTuple (unless it already is
-#'   one)
+#' .make_logging_tuple: Converts a dataset into a LoggingTuple (unless it
+#'   already is one)
 #'
 #' @param        .data         Any dataset. If it is a LoggingTuple, it is
 #'   returned unchanged. Otherwise, it is turned into a LoggingTuple, with
@@ -368,9 +363,70 @@ methods::setMethod(
 
 ###############################################################################
 
-# TODO: update all documentation / examples
-# - use .data instead of in.list or in_data
-# - refer to LoggingTuple rather than list(dataset, logdata)
+#' Return a list containing the input dataset or return the dataset if it is a
+#'   list
+
+.uplist <- function(.x){
+  if (is.list(.x)) {
+    .x
+    } else {
+    list(.x)
+    }
+  }
+
+###############################################################################
+
+#' Convert a list of modifiers and a list of loggers into a list of
+#' LoggingSteps
+#'
+#' @importFrom   magrittr      %>%
+#' @importFrom   stats         setNames
+#'
+
+.make_logstep_list <- function(
+    modifiers,
+    loggers
+  ){
+  if (length(loggers) == 0) {
+    stop("at least one logger is required")
+    }
+  if (length(modifiers) == 0) {
+    stop("at least one modifier is required")
+    }
+  if (length(modifiers) > 1 &&
+     length(loggers)   > 1 &&
+     length(modifiers) != length(loggers)
+     ) {
+    stop(
+      paste("if the modifiers and loggers have length > 1, then their lengths",
+            "should be identical")
+      )
+    }
+
+  # Define `logsteps` in terms of `modifiers` and `loggers`
+  # - Note that if multiple modifiers are provided, they arrive as a list
+  # - Whereas, a single modifier arrives as a fuction (and also for loggers)
+  # - Therere, we have to convert singleton functions into a list before
+  #     using Map())
+  mod_list <- .uplist(modifiers)
+  log_list <- .uplist(loggers)
+  step_names <- if (length(names(log_list)) > length(names(mod_list))) {
+    names(log_list)
+    } else {
+    names(mod_list)
+    }
+
+  Map(
+    function(mod_fn, log_fn){
+      LoggingStep(mod_fn, log_fn)
+      },
+    mod_list,
+    log_list
+    ) %>%
+    setNames(step_names)
+  }
+
+###############################################################################
 
 # TODO: add vectorised logsteps to examples section, ie,
 # -   piped.data %>% flog(
@@ -432,8 +488,6 @@ methods::setMethod(
 #'   is given by comparing the input to the k'th modifier to the output from
 #'   running the k'th modifier using the k'th logger function).
 #'
-#' @importFrom   magrittr      %>%
-#'
 #' @export
 #'
 #' @examples
@@ -456,15 +510,15 @@ methods::setMethod(
 #'
 #'   # You can use a raw dataset (ie, without logdata) as input as follows:
 #'
-#'   my.data <- c("I'm", "spaRtacus")
+#'   my_data <- c("I'm", "spaRtacus")
 #'   # - Explicit set-up of LoggingTuple:
-#'   #  flog(.data = LoggingTuple(dataset = my.data, logdata = list()),
+#'   #  flog(.data = LoggingTuple(dataset = my_data, logdata = list()),
 #'   #       tolower, logF)
-#'   # - Implicit set-up of `dataset` and `logdata` entries of in.list:
-#'   #  flog(.data = LoggingTuple(my.data, list()), tolower, logF)
-#'   #  flog(.data = LoggingTuple(my.data),         tolower, logF)
+#'   # - Implicit set-up of `dataset` and `logdata` entries of in_list:
+#'   #  flog(.data = LoggingTuple(my_data, list()), tolower, logF)
+#'   #  flog(.data = LoggingTuple(my_data),         tolower, logF)
 #'   # - Use bare dataset (and flog will convert it to a LoggingTuple)
-#'   flog(my.data, modifiers = tolower, loggers = logF)
+#'   flog(my_data, modifiers = tolower, loggers = logF)
 #'
 flog <- function(
     .data,
@@ -475,9 +529,6 @@ flog <- function(
   # Validity check and convert .data into a LoggingTuple
   tuple <- .make_logging_tuple(.data)
 
-  # START of logsteps definition
-  # TODO: move this wiry code into a separate function
-  #
   # The user must provide logsteps or both modifiers and loggers, but must not
   #   provide both logsteps and either modifiers or loggers
   # - If logsteps (a singleton or list of LoggingStep objects) has not been
@@ -488,56 +539,12 @@ flog <- function(
     if (missing(modifiers) || missing(loggers)) {
       stop("neither logsteps nor (modifiers & loggers) were defined in flog")
       }
-    if (length(loggers) == 0) {
-      stop("at least one logger is required if logsteps are not provided")
-      }
-    if (length(modifiers) == 0) {
-      stop("at least one modifier is required if logsteps are not provided")
-      }
-    if (length(modifiers) > 1 &&
-       length(loggers)   > 1 &&
-       length(modifiers) != length(loggers)
-       ) {
-      stop(
-        paste("if the modifiers/loggers have length > 1, then their lengths",
-              "should be identical")
-        )
-      }
-
-    # Define `logsteps` in terms of `modifiers` and `loggers`
-    # - Note that if multiple modifiers are provided, they arrive as a list
-    # - Whereas, a single modifier arrives as a fuction (and also for loggers)
-    # - Therere, we have to convert singleton functions into a list before
-    #     using Map())
-    .uplist <- function(.x){
-      if (is.list(.x)) {
-        .x
-        } else {
-        list(.x)
-        }
-      }
-    mod_list <- .uplist(modifiers)
-    log_list <- .uplist(loggers)
-    step_names <- if (length(names(log_list)) > length(names(mod_list))) {
-      names(log_list)
-      } else {
-      names(mod_list)
-      }
-
-    logsteps <- Map(
-      function(mod_fn, log_fn){
-        LoggingStep(mod_fn, log_fn)
-        },
-      mod_list,
-      log_list
-      ) %>%
-      setNames(step_names)
+    logsteps <- .make_logstep_list(modifiers, loggers)
     } else {
     if (!missing(modifiers) || !missing(loggers)) {
       stop("logsteps or (modifiers & loggers) should be defined, but not both")
       }
     }
-  # END of logsteps definition
 
   # `logsteps` should either be a single LoggingStep object or a list thereof
   stopifnot(
@@ -581,6 +588,8 @@ flog <- function(
   }
 
 ##############################################################################
+
+# TODO: Examples for flog_filter_df
 
 #' flog_filter_df
 #'
@@ -655,7 +664,7 @@ flog_filter_df <- function(
              )
 
   new_log_value <- get_logdata(fd) %>%
-    setNames(modifier_names) %>%
+    stats::setNames(modifier_names) %>%
     # TODO: check for NULL-offset bug within rbind_all / bind_rows in dplyr-0.5
     dplyr::bind_rows(.id = "filter_name") %>%
     dplyr::mutate_(
@@ -663,11 +672,10 @@ flog_filter_df <- function(
       ) %>%
     as.data.frame(stringsAsFactors = FALSE)
 
-  result <- LoggingTuple(
+  LoggingTuple(
     dataset  = get_dataset(fd),
     logdata = append(get_logdata(tuple), list(new_log_value))
     )
-  result
   }
 
 ##############################################################################
