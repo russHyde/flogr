@@ -45,6 +45,10 @@
 
 ###############################################################################
 
+# TODO: Check all documentation agrees with the implementation
+
+###############################################################################
+
 #' @name         flog-NULL-function
 #' @title        flog-NULL-function
 #' @description  Unnecessary description for NULL function
@@ -587,7 +591,35 @@ flog <- function(
   go(tuple, logsteps)
   }
 
-##############################################################################
+###############################################################################
+
+# TODO: Unit test this
+# TODO: If .dots is a function, return that function
+
+#' Converts a string into a filter-function for use in flog_filter_df
+#'
+#' @param        .dots         Should be a single string that could be used
+#'   to filter a dataset. See the format of \code{.dots} used by
+#'   \code{dplyr::filter_} for examples of string-filters.
+#'
+#' @return       A function
+#'
+#' @importFrom   dplyr         filter_
+#'
+.make_flog_df_filter <- function(.dots){
+  stopifnot(is.character(.dots) && length(.dots) == 1)
+  if (.dots == "identity") {
+    return(identity)
+    } else {
+    return(
+      function(DF){
+        dplyr::filter_(DF, .dots = .dots)
+        }
+      )
+    }
+  }
+
+###############################################################################
 
 # TODO: Examples for flog_filter_df
 
@@ -628,22 +660,6 @@ flog_filter_df <- function(
   # Validity check and convert .data into a LoggingTuple
   tuple <- .make_logging_tuple(.data)
 
-  # TODO: pull this out as non-exported function .flog_filter_maker and unit
-  #   test it
-  # TODO: If .dots is a function, return that function
-  # Converts a string into a filter-function for use in flog_filter_df
-  filter_maker <- function(.dots){
-    if (.dots == "identity") {
-      return(identity)
-      } else {
-      return(
-        function(DF){
-          dplyr::filter_(DF, .dots = .dots)
-          }
-        )
-      }
-    }
-
   stopifnot(is.data.frame(get_dataset(tuple)))
 
   # TODO: Test to check that existing logdata is neither bind_row'ed nor
@@ -655,7 +671,7 @@ flog_filter_df <- function(
   # Assumes that the output from logger is a data.frame
   # Combines multiple, string-form filters, each to be applied sequentially,
   #   into a single flog-type function
-  modifiers      <- Map(filter_maker, filter_dots)
+  modifiers      <- Map(.make_flog_df_filter, filter_dots)
   modifier_names <- names(modifiers)
 
   fd <- flog(.data     = get_dataset(tuple),
