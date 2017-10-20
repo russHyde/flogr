@@ -723,18 +723,10 @@ data.frame"
     info = "User should provide .data to flog_filter_df"
     )
 
-  # - Both in.list and in_data are defined
-  expect_error(
-    flog_filter_df(in.list = list(data.frame()),
-                   filter_dots = "identity",
-                   logger = nrow.logger,
-                   in_data = data.frame()),
-    info = "User should provide only one of in.list or in_data"
-    )
   # - filter_dots is not a vector of strings (OR [to implement] A list/vector
   # or functions)
   expect_error(
-    flog_filter_df(in.list = list(data.frame()),
+    flog_filter_df(.data = list(data.frame()),
                    filter_dots = 1,
                    logger = nrow.logger),
     info = "filter_dots should be a vector of strings, a vector of functions,
